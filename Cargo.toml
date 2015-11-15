@@ -1,0 +1,9 @@
+[package]
+name = "search-http"
+version = "0.1.0"
+authors = ["Jan Christophersen <jan@ruken.pw>"]
+
+[dependencies]
+hyper = { git = "https://github.com/hyperium/hyper" }
+regex = "0.1.41"
+
