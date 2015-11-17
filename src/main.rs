@@ -8,16 +8,19 @@ mod http {
     extern crate hyper;
     use std::io::Read;
 
-    fn get(path: &str) -> self::hyper::client::Response {
-        hyper::Client::new().get(path).header(hyper::header::Connection::close()).send().unwrap()
+    fn get(path: &str) -> Result<self::hyper::client::response::Response, self::hyper::error::Error> {
+        hyper::Client::new().get(path).header(hyper::header::Connection::close()).send()
     }
 
-    pub fn download(path: &str) -> String {
-        let mut body = String::new();
-
-        let mut res = self::get(path);
-        res.read_to_string(&mut body).unwrap();
-        return body.to_string();
+    pub fn download(path: &str, content: &mut String) -> Result<(), String> {
+        let mut res = match self::get(path) {
+            Ok(res) => res,
+            Err(..) => return Err("could not download file".to_string()),
+        };
+        match res.read_to_string(content) {
+            Err(..) => Err("could not read content".to_string()),
+            Ok(..) => Ok(()),
+        }
     }
 
     pub fn encode_uri(path: &str) -> String {
@@ -27,24 +30,27 @@ mod http {
 
 
 fn main() {
-    let args: Vec<_> = env::args().collect();
+    let args = &mut env::args();
 
     if args.len() < 5 {
-        println!("invalid args");
-        return;
+        panic!("invalid args");
     }
 
-    let anime = &args[1];
-    let base_uri = &args[4];
+    let anime = args.nth(1).unwrap();
+    let base_uri = args.nth(4).unwrap();
+    let mut content = String::new();
 
-    let content = http::download(&*format!("{}/{}", base_uri, anime));
+    if let Err(..) = http::download(&format!("{}/{}", base_uri, anime), &mut content) {
+        panic!("could not download file");
+    }
 
     let reg = Regex::new("<a href=\"(.*?)\">(.*?) - ([0-9]{1,}(v[0-9]{1,}){0,1})\\.mkv</a>").unwrap();
 
+    println!("http search");
     println!("kyou best gril");
-    for cap in reg.captures_iter(&*content) {
+    for cap in reg.captures_iter(&content) {
         let ep_name = cap.at(3).unwrap_or("invalid");
         assert!(ep_name != "invalid");
-        println!("{} ||| {} ||| {}", ep_name, http::encode_uri(&*format!("{}/{}/{} - {}.mkv", base_uri, anime, anime, ep_name)), format!("{} - {}.mkv", anime, ep_name));
+        println!("{} ||| {} ||| {}", ep_name, http::encode_uri(&format!("{}/{}/{} - {}.mkv", base_uri, anime, anime, ep_name)), format!("{} - {}.mkv", anime, ep_name));
     }
 }
