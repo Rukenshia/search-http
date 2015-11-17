@@ -36,10 +36,9 @@ fn main() {
         panic!("invalid args");
     }
 
-    let anime = args.nth(1).unwrap();
-    let base_uri = args.nth(4).unwrap();
+    let anime = &args.nth(1).unwrap();
+    let base_uri = &args.nth(2).unwrap();
     let mut content = String::new();
-
     if let Err(..) = http::download(&format!("{}/{}", base_uri, anime), &mut content) {
         panic!("could not download file");
     }
