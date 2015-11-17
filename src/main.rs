@@ -30,14 +30,14 @@ mod http {
 
 
 fn main() {
-    let args = &mut env::args();
+    let args: Vec<_> = env::args().collect();
 
     if args.len() < 5 {
         panic!("invalid args");
     }
 
-    let anime = &args.nth(1).unwrap();
-    let base_uri = &args.nth(2).unwrap();
+    let anime = &args[1];
+    let base_uri = &args[4];
     let mut content = String::new();
     if let Err(..) = http::download(&format!("{}/{}", base_uri, anime), &mut content) {
         panic!("could not download file");
@@ -48,8 +48,7 @@ fn main() {
     println!("http search");
     println!("kyou best gril");
     for cap in reg.captures_iter(&content) {
-        let ep_name = cap.at(3).unwrap_or("invalid");
-        assert!(ep_name != "invalid");
+        let ep_name = cap.at(3).unwrap_or("?");
         println!("{} ||| {} ||| {}", ep_name, http::encode_uri(&format!("{}/{}/{} - {}.mkv", base_uri, anime, anime, ep_name)), format!("{} - {}.mkv", anime, ep_name));
     }
 }
